@@ -6,17 +6,6 @@ import (
 	"context"
 )
 
-const addProduct = `-- name: AddProduct :one
-INSERT INTO product (
-    name,
-	price,
-	description,
-	quantity
-) VALUES (
-    $1, $2, $3, $4
-) RETURNING id, name, price, description, quantity, created_at
-`
-
 type AddProductParams struct {
 	Name        string `json:"name"`
 	Price       int    `json:"price"`
@@ -24,12 +13,22 @@ type AddProductParams struct {
 	Quantity    int    `json:"quantity"`
 }
 
-func (q *Queries) AddProduct(ctx context.Context, arg AddProductParams) (Product, error) {
-	row := q.db.QueryRowContext(ctx, addProduct,
-		arg.Name,
-		arg.Price,
-		arg.Description,
-		arg.Quantity,
+func (q *Queries) AddProduct(ctx context.Context, params AddProductParams) (Product, error) {
+	query := `
+	INSERT INTO product (
+		name,
+		price,
+		description,
+		quantity
+	) VALUES (
+		$1, $2, $3, $4
+	) RETURNING id, name, price, description, quantity, created_at
+	`
+	row := q.db.QueryRowContext(ctx, query,
+		params.Name,
+		params.Price,
+		params.Description,
+		params.Quantity,
 	)
 	var i Product
 	err := row.Scan(
@@ -42,40 +41,41 @@ func (q *Queries) AddProduct(ctx context.Context, arg AddProductParams) (Product
 	)
 	return i, err
 }
-
-const getProduct = `-- name: GetProduct :one
-SELECT id, name, price, description, quantity, created_at FROM product
-WHERE id = $1 LIMIT 1
-`
-
-func (q *Queries) GetProduct(ctx context.Context, id int32) (Product, error) {
-	row := q.db.QueryRowContext(ctx, getProduct, id)
-	var i Product
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.Price,
-		&i.Description,
-		&i.Quantity,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
-const listProducts = `-- name: ListProducts :many
-SELECT id, name, price, description, quantity, created_at FROM product
-ORDER BY id
-LIMIT $1
-OFFSET $2
-`
 
 type ListProductsParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	Limit     int
+	Offset    int
+	Price     string
+	Name      string
+	Quantity  string
+	CreatedAt string
 }
 
-func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]Product, error) {
-	rows, err := q.db.QueryContext(ctx, listProducts, arg.Limit, arg.Offset)
+func (q *Queries) ListProducts(ctx context.Context, params ListProductsParams) ([]Product, error) {
+	counter := 0
+	query := `
+		SELECT id, name, price, description, quantity, created_at FROM product
+	`
+
+	orderBy := ` ORDER BY `
+	if params.Name != "" {
+		orderBy += params.Name
+		counter++
+	} else if params.Price != "" {
+		orderBy += params.Price
+		counter++
+	} else if params.Quantity != "" {
+		orderBy += params.Quantity
+		counter++
+	}
+
+	if counter != 0 {
+		query += orderBy
+	}
+
+	query += `LIMIT $1 OFFSET $2`
+
+	rows, err := q.db.QueryContext(ctx, query, params.Limit, params.Offset)
 	if err != nil {
 		return nil, err
 	}
