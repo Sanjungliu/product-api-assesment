@@ -67,6 +67,9 @@ func (q *Queries) ListProducts(ctx context.Context, params ListProductsParams) (
 	} else if params.Quantity != "" {
 		orderBy += params.Quantity
 		counter++
+	} else if params.CreatedAt != "" {
+		orderBy += params.CreatedAt
+		counter++
 	}
 
 	if counter != 0 {

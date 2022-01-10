@@ -44,6 +44,7 @@ func (c *Controller) GetListProduct(w http.ResponseWriter, r *http.Request) {
 	name := ""
 	price := ""
 	quantity := ""
+	createdAt := ""
 
 	if queryValues.Get("limit") != "" {
 		limitQuery, err := strconv.Atoi(queryValues.Get("limit"))
@@ -79,13 +80,20 @@ func (c *Controller) GetListProduct(w http.ResponseWriter, r *http.Request) {
 	if strings.ToUpper(queryValues.Get("quantity")) == "ASC" {
 		quantity = "quantity ASC "
 	}
+	if strings.ToUpper(queryValues.Get("createdAt")) == "DESC" {
+		createdAt = "created_at DESC "
+	}
+	if strings.ToUpper(queryValues.Get("createdAt")) == "ASC" {
+		createdAt = "created_at ASC "
+	}
 
 	products, err := c.Product.GetListProduct(r.Context(), db.ListProductsParams{
-		Limit:    limit,
-		Offset:   offset,
-		Name:     name,
-		Price:    price,
-		Quantity: quantity,
+		Limit:     limit,
+		Offset:    offset,
+		Name:      name,
+		Price:     price,
+		Quantity:  quantity,
+		CreatedAt: createdAt,
 	})
 	if err != nil {
 		response.JSON(w, http.StatusInternalServerError, "Internal Server Error")
