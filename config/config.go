@@ -18,11 +18,11 @@ func (c *Config) Environment() string {
 }
 
 func (c *Config) DBConnectionString() string {
-	return getStringOrDefault(DBConnectionString, "")
+	return getStringOrDefault(DBConnectionString, "postgres://root:secret@localhost:5433/product-api?sslmode=disable")
 }
 
 func (c *Config) RedisAddr() string {
-	return getStringOrDefault(RedisAddr, "")
+	return getStringOrDefault(RedisAddr, "localhost:6378")
 }
 
 func (c *Config) RedisPass() string {

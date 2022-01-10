@@ -79,6 +79,7 @@ func (q *Queries) ListProducts(ctx context.Context, params ListProductsParams) (
 	if err != nil {
 		return nil, err
 	}
+
 	defer rows.Close()
 	var items []Product
 	for rows.Next() {
@@ -101,5 +102,6 @@ func (q *Queries) ListProducts(ctx context.Context, params ListProductsParams) (
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
+
 	return items, nil
 }
